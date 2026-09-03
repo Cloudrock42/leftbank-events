@@ -33,27 +33,14 @@ if (!NOTION_TOKEN) {
 // ---------- Notion helpers ----------
 
 async function notionQuery(cursor) {
+  // Status-only filter (Notion compound filters max out at two levels);
+  // date and TBA logic is applied in JS below.
   const body = {
     page_size: 100,
     filter: {
-      and: [
-        {
-          or: [
-            { property: "Status", select: { equals: "Confirmed" } },
-            { property: "Status", select: { equals: "Published" } },
-          ],
-        },
-        {
-          or: [
-            { property: "Date", date: { on_or_after: todayISO() } },
-            {
-              and: [
-                { property: "Date", date: { is_empty: true } },
-                { property: "Date TBA", checkbox: { equals: true } },
-              ],
-            },
-          ],
-        },
+      or: [
+        { property: "Status", select: { equals: "Confirmed" } },
+        { property: "Status", select: { equals: "Published" } },
       ],
     },
     sorts: [{ property: "Date", direction: "ascending" }],
@@ -205,7 +192,11 @@ function renderSchema(events) {
     cursor = res.has_more ? res.next_cursor : null;
   } while (cursor);
 
-  const events = pages.map(toEvent).filter((e) => e.title && (e.start || e.dateTBA));
+  const today = todayISO();
+  const events = pages
+    .map(toEvent)
+    .filter((e) => e.title)
+    .filter((e) => (e.start ? e.start.slice(0, 10) >= today : e.dateTBA));
   const featuredId = pickFeatured(events);
 
   fs.mkdirSync(OUT, { recursive: true });
