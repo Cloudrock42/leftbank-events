@@ -34,6 +34,10 @@ jobs:
           set -o pipefail
           node build.js 2>&1 | tee out.log || { echo "::error::$(tail -c 700 out.log | tr '\n' ' ')"; exit 1; }
 
+
+      - name: Report feed contents
+        run: |
+          echo "::notice::events=$(node -e "const d=require('./dist/events.json');console.log(d.events.length+' | '+d.events.map(e=>e.title+' '+(e.start||'TBA').slice(0,10)).join(', '))")"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
