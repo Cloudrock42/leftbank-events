@@ -30,7 +30,9 @@ jobs:
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-        run: node build.js
+        run: |
+          set -o pipefail
+          node build.js 2>&1 | tee out.log || { echo "::error::$(tail -c 700 out.log | tr '\n' ' ')"; exit 1; }
 
       - uses: actions/upload-pages-artifact@v3
         with:
